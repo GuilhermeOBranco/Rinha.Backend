@@ -4,23 +4,23 @@ services:
   app:
     build: .
     ports:
-      - "7152"  # Não mapeie diretamente a porta, pois o balanceador de carga Nginx será responsável por isso
+      - "7152"  
     environment:
-      ASPNETCORE_ENVIRONMENT: Production  # Define o ambiente de execução como Produção
+      ASPNETCORE_ENVIRONMENT: Production  
     depends_on:
-      - db  # Especifica que este serviço depende do serviço 'db'
+      - db  
     networks:
       - backend
 
   nginx:
     image: nginx
     ports:
-      - "8080:80"  # Mapeia a porta 8080 do host para a porta 80 do contêiner
+      - "8080:80"  
     volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro  # Monta o arquivo de configuração do Nginx
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro 
     depends_on:
-      - app  # Especifica que este serviço depende do serviço 'app'
-    command: [nginx, '-g', 'daemon off;']  # Mantém o Nginx em primeiro plano
+      - app  
+    command: [nginx, '-g', 'daemon off;']  
     networks:
       - backend
 
@@ -31,7 +31,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: pass
     volumes:
-      - ./database.sql:/docker-entrypoint-initdb.d/database.sql  # Monta o script SQL para inicializar o banco de dados
+      - ./database.sql:/docker-entrypoint-initdb.d/database.sql 
     networks:
       - backend
 
