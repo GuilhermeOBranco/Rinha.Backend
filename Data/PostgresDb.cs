@@ -6,13 +6,19 @@ using Npgsql;
 
 namespace Rinha.Backend.API.Data
 {
-    public static class PostgresDb
+    public class PostgresDb : IDisposable
     {
-        public static async Task<NpgsqlConnection> GetConnectionAsync()
+        private NpgsqlConnection _connection;
+        public async Task<NpgsqlConnection> GetConnectionAsync()
         {
-            var conn = new NpgsqlConnection("Host=db;Port=5432;Database=postgres;Username=postgres;Password=pass");
-            await conn.OpenAsync();
-            return conn;
+            _connection = new NpgsqlConnection("Host=db;Port=5432;Database=postgres;Username=postgres;Password=pass");
+            await _connection.OpenAsync();
+            return _connection;
+        }
+
+        public void Dispose()
+        {
+            _connection.Close();
         }
     }
 }
