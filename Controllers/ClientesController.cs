@@ -26,9 +26,9 @@ namespace Rinha.Backend.API.Controllers
                 if (id < 1 || id > 5)
                     return NotFound();
 
-                await ProcessarTransacao(request, id);
+                (int limite, int saldo) = await ProcessarTransacao(request, id);
 
-                return Ok(request);
+                return Ok(new { limite = limite, saldo = saldo });
 
             }
             catch (InvalidValueException ex)
@@ -90,7 +90,7 @@ namespace Rinha.Backend.API.Controllers
             return Ok(extrato);
         }
 
-        private async Task ProcessarTransacao(TransacaoRequest request, int id)
+        private async Task<(int, int)> ProcessarTransacao(TransacaoRequest request, int id)
         {
             PostgresDb postgresDb = new PostgresDb();
             using (var connection = await postgresDb.GetConnectionAsync())
@@ -100,7 +100,7 @@ namespace Rinha.Backend.API.Controllers
                     using (var command = new NpgsqlCommand("SELECT limite, saldo_atual FROM CLIENTE WHERE id = @v1", connection))
                     {
                         command.Parameters.AddWithValue("v1", id);
-                        
+
                         using (var reader = await command.ExecuteReaderAsync())
                         {
 
@@ -152,6 +152,33 @@ namespace Rinha.Backend.API.Controllers
 
                             transaction.Commit();
                         }
+
+                        using (var command = new NpgsqlCommand("SELECT limite, saldo_atual FROM CLIENTE WHERE id = @v1", connection))
+                        {
+                            command.Parameters.AddWithValue("v1", id);
+
+                            using (var reader = await command.ExecuteReaderAsync())
+                            {
+
+                                if (reader.Rows > 0)
+                                {
+                                    int limite = reader.GetInt32(0);
+                                    int saldoAtual = reader.GetInt32(1);
+
+
+                                    if ((request.Valor - saldoAtual) < limite)
+                                    {
+                                        throw new InvalidValueException();
+                                    }
+
+                                    return (limite, saldoAtual);
+                                }
+                            }
+
+                        }
+
+                        return (0, 0);
+
                     }
                     catch (DBConcurrencyException ex)
                     {

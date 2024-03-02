@@ -19,6 +19,7 @@ namespace Rinha.Backend.API.Data
         public void Dispose()
         {
             _connection.Close();
+            GC.Collect();
         }
     }
 }
